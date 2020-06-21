@@ -1,0 +1,55 @@
+---
+title: "Tourist Attractions in Paris"
+author: "Amir Abbas Shojakhani"
+date: "6/21/2020"
+output: html_document
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(shiny)
+library(leaflet)
+library(rmarkdown)
+library(rsconnect)
+```
+
+```{r}
+Paris_attractions_names <- c("Eiffel Tower", "Musee du Louvre", "Notre Dame Cathedral", "Jardin du Luxembourg", "Champs-Elysees", "Arc de Triomphe", "Pont-Neuf Bridge", "The Hotel de Ville", "Sacre-Coeur", "Moulin Rouge", "Montmartre Hill", "Musee d'Orsay", "Hotel National des Invalides", "Rue Brey")
+Paris_attractions_lngs <- c(2.29449, 2.338629, 2.349902, 2.337170, 2.304897, 2.294946, 2.341033, 2.353016, 2.343121, 2.332400, 2.340607, 2.326561, 2.312461, 2.295138)
+Paris_attractions_lats <- c(48.85826, 48.860294, 48.852966, 48.846870, 48.870502, 48.873756, 48.856750, 48.856373, 48.886452, 48.884129, 48.887691, 48.859962, 48.854904, 48.876965)
+Paris_attractions_types <- c("historical,cultural", "cultural", "historical,cultural", "historical,cultural", "entertainment,cultural", "historical", "historical", "historical", "historical", "entertainment", "cultural", "cultural", "historical,cultural", "entertainment")
+Paris_attractions_locations <- data.frame("attraction_name" = Paris_attractions_names, "lng" = Paris_attractions_lngs, "lat" = Paris_attractions_lats, "type" = Paris_attractions_types)
+
+draw_map <- function(attractions_table = Paris_attractions_locations) {
+Paris_attractions_map <- leaflet()
+Paris_attractions_map <- addTiles(Paris_attractions_map)
+Paris_attractions_map <- addMarkers(Paris_attractions_map, lng = attractions_table$lng, lat = attractions_table$lat, popup = attractions_table$attraction_name)
+}
+```
+
+```{r, echo = FALSE}
+sidebarLayout( 
+  sidebarPanel(radioButtons(inputId = "attractions", label = "See on Map", choiceNames = c("All Attractions", 
+  "Cultural  Attractions", "Historical Attractions", "Entertainment Attractions"), choiceValues = c(1, 2, 3, 4), selected = "1")
+  ), 
+  mainPanel(leafletOutput("plot_map")
+  )
+)
+```
+
+```{r, echo = FALSE}
+observeEvent(input$attractions, {
+  if (input$attractions == 2) {
+    output$plot_map <- renderLeaflet(draw_map(attractions_table = Paris_attractions_locations[grep("cultural", Paris_attractions_locations$type),]))
+  } else if (input$attractions == 3) {
+    output$plot_map <- renderLeaflet(draw_map(attractions_table = Paris_attractions_locations[grep("historical", Paris_attractions_locations$type),]))
+  } else if (input$attractions == 4) {
+    output$plot_map <- renderLeaflet(draw_map(attractions_table = Paris_attractions_locations[grep("entertainment", Paris_attractions_locations$type),]))
+  } else {
+   output$plot_map <- renderLeaflet(draw_map()) 
+  }
+})
+```
+
+
